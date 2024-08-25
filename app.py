@@ -9,38 +9,10 @@ import json
 load_dotenv()
 app = FastAPI()
 
-from io import StringIO 
-import sys
-
-class Capturing(list):
-    def __enter__(self):
-        self._stdout = sys.stdout
-        sys.stdout = self._stringio = StringIO()
-        return self
-    def __exit__(self, *args):
-        self.extend(self._stringio.getvalue().splitlines())
-        del self._stringio    # free up some memory
-        sys.stdout = self._stdout
-
-
-import re
-
-def clean_text(text):
-    # Remove escape sequences
-    cleaned_text = re.sub(r'\x1b\[[0-9;]*m', '', text)
-    
-    # Remove pipe characters and other unnecessary characters
-    cleaned_text = re.sub(r'[|]', '', cleaned_text)
-    
-    # Remove unnecessary white spaces
-    cleaned_text = re.sub(r'\s+', ' ', cleaned_text).strip()
-
-    return cleaned_text
-
-@app.post("/process-ingredients/")
+@app.get("/process-ingredients/")
 async def process_ingredients(product_name: str):
     assistant = Assistant(
-        llm=Groq(model="gemma2-9b-it"),
+        llm=Groq(model="llama3-groq-70b-8192-tool-use-preview"),
         tools=[DuckDuckGo()],
         description="You are a diet research expert and your job is to research and tell the ingredients list along with their composition of any given product in a specific JSON format.",
         instructions=[
@@ -49,7 +21,7 @@ async def process_ingredients(product_name: str):
             "Add more ingredients as needed but in a JSON format",
             "ONLY Respond back with json. Nothing extra."
         ],
-        # debug_mode=True
+        debug_mode=True
     )
     
     # Generate response
@@ -85,4 +57,4 @@ async def process_ingredients(product_name: str):
     return response_dict
 
 if __name__ == "__main__":
-    uvicorn.run(app, host="0.0.0.0", port=80)
+    uvicorn.run(app, host="0.0.0.0", port=10000)
