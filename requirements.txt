@@ -5,3 +5,4 @@ phidata
 python-dotenv
 openai
 uvicorn
+requests
